@@ -1,0 +1,41 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mariadb://localhost:3306/club}
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: org.mariadb.jdbc.Driver
+    #  datasource:
+    #    url: jdbc:mariadb://localhost:3306/DELIVERY
+    #    username: root
+    #    password:
+    #    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate.ddl-auto: update
+    open-in-view: false
+  servlet.multipart:
+    max-file-size: 10MB
+    max-request-size: 10MB
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+server:
+  error.include-message: always
+app:
+  jwt.secret: ${JWT_SECRET:change-test-secret-change-this-secret-change-this-1234}
+  # Base URL of the public site, used to build the link in the "reset your password" email
+  # (e.g. https://my-club.com). Defaults to the Vite dev server for local development.
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  admin:
+    username: ${ADMIN_USERNAME:admin}
+    email: ${ADMIN_EMAIL:admin@club.local}
+    password: ${ADMIN_PASSWORD:Admin123!}
+  mail:
+    # Off by default so the app runs without SMTP credentials. Set MAIL_ENABLED=true and fill in
+    # MAIL_USERNAME/MAIL_PASSWORD (and MAIL_HOST/MAIL_PORT if not using Gmail) to actually send email.
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:no-reply@club.local}

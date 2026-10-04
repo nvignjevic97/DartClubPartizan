@@ -37,7 +37,19 @@ services:
   frontend:
     build: ./frontend
     depends_on: [backend]
-    ports: ["80:80"]
+    expose: ["80"]
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [frontend]
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
 
 volumes:
   dbdata:
+  caddy_data:
+  caddy_config:

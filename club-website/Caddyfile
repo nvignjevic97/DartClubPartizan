@@ -1,0 +1,3 @@
+pikadoklubpartizan.rs, www.pikadoklubpartizan.rs {
+    reverse_proxy frontend:80
+}

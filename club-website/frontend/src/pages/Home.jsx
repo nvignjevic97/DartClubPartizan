@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, fmtDate } from '../api.js';
 import { useConfig } from '../config.js';
+import { useLang } from '../i18n/index.jsx';
 
 export default function Home() {
   const cfg = useConfig();
+  const { t } = useLang();
   const [news, setNews] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [active, setActive] = useState(0);
@@ -34,8 +36,8 @@ export default function Home() {
         )}
       </section>
 
-      <h2 className="sec">Latest news</h2>
-      {news.length === 0 && <p className="muted">No news posted yet.</p>}
+      <h2 className="sec">{t('home.latestNews')}</h2>
+      {news.length === 0 && <p className="muted">{t('home.noNews')}</p>}
       {news.map((n) => (
         <article className="card" key={n.id}>
           {n.imageUrl && <img src={n.imageUrl} alt="" />}

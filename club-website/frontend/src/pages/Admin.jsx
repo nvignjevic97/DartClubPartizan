@@ -3,7 +3,7 @@ import { api, fmtDate } from '../api.js';
 import { useConfig } from '../config.js';
 import Crud from '../components/Crud.jsx';
 
-const TABS = ['Accounts', 'Subscriptions', 'News', 'Matches', 'League table', 'Email templates', 'Marketing emails', 'Site settings'];
+const TABS = ['Accounts', 'Subscriptions', 'News', 'Matches', 'League table', 'Founders', 'Club Statute', 'Email templates', 'Marketing emails', 'Site settings'];
 
 export default function Admin() {
   const [tab, setTab] = useState(TABS[0]);
@@ -32,6 +32,8 @@ export default function Admin() {
         fields={[{ name: 'team', label: 'Team', type: 'text' }, { name: 'won', label: 'Won', type: 'number' },
           { name: 'lost', label: 'Lost', type: 'number' }, { name: 'points', label: 'Points', type: 'number' }]}
         summary={(s) => `${s.team} — ${s.points} pts (${s.won}W-${s.lost}L)`} />}
+      {tab === 'Founders' && <FoundersAdmin />}
+      {tab === 'Club Statute' && <StatuteAdmin />}
       {tab === 'Email templates' && <EmailTemplates />}
       {tab === 'Marketing emails' && <MarketingEmails />}
       {tab === 'Site settings' && <><HeroImages /><Settings /></>}
@@ -538,6 +540,112 @@ function MarketingEmails() {
         </p>
       )}
       <button className="btn" disabled={busy || recipientCount === 0}>{busy ? 'Sending…' : `Send to ${recipientCount} member${recipientCount === 1 ? '' : 's'}`}</button>
+    </form>
+  );
+}
+
+function FoundersAdmin() {
+  const empty = { name: '', text: '', imageUrl: '' };
+  const [items, setItems] = useState([]);
+  const [item, setItem] = useState(empty);
+  const [err, setErr] = useState('');
+  const load = () => api.get('/admin/founders').then(setItems).catch((e) => setErr(e.message));
+  useEffect(() => { load(); }, []);
+
+  async function uploadImage(file) {
+    if (!file) return;
+    const form = new FormData(); form.append('file', file);
+    try { const r = await api.upload('/admin/assets', form); setItem((o) => ({ ...o, imageUrl: r.url })); } catch (e) { setErr(e.message); }
+  }
+
+  async function save(e) {
+    e.preventDefault(); setErr('');
+    try {
+      if (item.id) await api.put(`/admin/founders/${item.id}`, item); else await api.post('/admin/founders', item);
+      setItem(empty); load();
+    } catch (ex) { setErr(ex.message); }
+  }
+
+  async function remove(id) { if (!confirm('Delete this founder?')) return; await api.del(`/admin/founders/${id}`); load(); }
+  async function move(id, dir) { setItems(await api.put(`/admin/founders/${id}/move?dir=${dir}`)); }
+
+  return (
+    <div className="split">
+      <form className="box" onSubmit={save}>
+        <h3>{item.id ? 'Edit' : 'Add'} founder</h3>
+        <label>Name<input value={item.name} onChange={(e) => setItem({ ...item, name: e.target.value })} required /></label>
+        <label>Text<textarea rows={5} value={item.text} onChange={(e) => setItem({ ...item, text: e.target.value })} /></label>
+        <label>Photo
+          {item.imageUrl && <img className="thumb" src={item.imageUrl} alt="" />}
+          <input type="file" accept="image/*" onChange={(e) => uploadImage(e.target.files[0])} />
+        </label>
+        {err && <p className="err">{err}</p>}
+        <div className="row">
+          <button className="btn">Save</button>
+          {item.id && <button type="button" className="btn ghost" onClick={() => setItem(empty)}>Cancel</button>}
+        </div>
+      </form>
+      <div>
+        {items.length === 0 && <p className="muted">No founders added yet.</p>}
+        {items.map((f, i) => (
+          <div className="listrow" key={f.id}>
+            <span>{f.name}</span>
+            <span className="row">
+              <button className="link dark" disabled={i === 0} onClick={() => move(f.id, 'up')}>↑</button>
+              <button className="link dark" disabled={i === items.length - 1} onClick={() => move(f.id, 'down')}>↓</button>
+              <button className="link dark" onClick={() => setItem(f)}>Edit</button>
+              <button className="link dark" onClick={() => remove(f.id)}>Delete</button>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StatuteAdmin() {
+  const cfg = useConfig();
+  const [text, setText] = useState('');
+  const [docUrl, setDocUrl] = useState('');
+  const [docName, setDocName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    setText(cfg.statuteText || ''); setDocUrl(cfg.statuteDocumentUrl || ''); setDocName(cfg.statuteDocumentName || '');
+  }, []);
+
+  async function uploadDoc(file) {
+    if (!file) return;
+    setBusy(true); setErr('');
+    try {
+      const form = new FormData(); form.append('file', file);
+      const r = await api.upload('/admin/assets/document', form);
+      setDocUrl(r.url); setDocName(r.name);
+    } catch (e) { setErr(e.message); } finally { setBusy(false); }
+  }
+
+  async function save(e) {
+    e.preventDefault(); setErr(''); setMsg('');
+    try {
+      await api.put('/admin/config', { statuteText: text, statuteDocumentUrl: docUrl, statuteDocumentName: docName });
+      await cfg.reload(); setMsg('Saved');
+    } catch (ex) { setErr(ex.message); }
+  }
+
+  return (
+    <form className="box narrow" onSubmit={save}>
+      <h3>Club statute</h3>
+      <label>Intro text<textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} /></label>
+      <label>Document (PDF or Word)
+        {docUrl && <p className="muted">Current file: <a href={docUrl} target="_blank" rel="noreferrer">{docName || docUrl}</a></p>}
+        <input type="file" accept=".pdf,.doc,.docx" disabled={busy} onChange={(e) => uploadDoc(e.target.files[0])} />
+        {docUrl && <button type="button" className="link dark" onClick={() => { setDocUrl(''); setDocName(''); }}>Remove document</button>}
+      </label>
+      {err && <p className="err">{err}</p>}
+      {msg && <p className="ok">{msg}</p>}
+      <button className="btn">Save</button>
     </form>
   );
 }

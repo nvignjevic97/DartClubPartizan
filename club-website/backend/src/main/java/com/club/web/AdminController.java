@@ -22,6 +22,7 @@ public class AdminController {
     public record AccountDetail(Long id, String username, String email, String name, String surname, String mobilePhone, String memberSince, List<PaymentRow> payments) {}
 
     public record HeroImageReq(String url) {}
+    public record FounderReq(String name, String text, String imageUrl) {}
     public record MemberRow(Long userId, String fullName, String email) {}
     public record MarketingSendReq(String subject, String body, List<Long> recipientIds) {}
     public record MarketingSendResult(int sent, int failed, int skipped) {}
@@ -31,12 +32,14 @@ public class AdminController {
 
     private final NewsRepo news; private final GameRepo games; private final StandingRepo standings;
     private final SettingRepo settings; private final AssetRepo assets; private final PaymentRepo payments; private final UserRepo users;
-    private final HeroImageRepo heroImages; private final MailService mail;
+    private final HeroImageRepo heroImages; private final MailService mail; private final FounderRepo founders;
 
     public AdminController(NewsRepo news, GameRepo games, StandingRepo standings, SettingRepo settings,
-                           AssetRepo assets, PaymentRepo payments, UserRepo users, HeroImageRepo heroImages, MailService mail) {
+                           AssetRepo assets, PaymentRepo payments, UserRepo users, HeroImageRepo heroImages, MailService mail,
+                           FounderRepo founders) {
         this.news = news; this.games = games; this.standings = standings; this.settings = settings;
         this.assets = assets; this.payments = payments; this.users = users; this.heroImages = heroImages; this.mail = mail;
+        this.founders = founders;
     }
 
     // ---- news ----
@@ -71,6 +74,53 @@ public class AdminController {
         if (!ct.startsWith("image/")) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only images are allowed");
         Asset a = new Asset(); a.setName(file.getOriginalFilename()); a.setContentType(ct); a.setData(file.getBytes());
         return Map.of("url", "/api/assets/" + assets.save(a).getId());
+    }
+
+    /** Documents (e.g. the club statute) - PDF or Word, unlike /assets which is images only. */
+    @PostMapping(value = "/assets/document", consumes = "multipart/form-data")
+    public Map<String, String> uploadDocument(@RequestParam MultipartFile file) throws IOException {
+        String ct = file.getContentType() == null ? "" : file.getContentType();
+        boolean ok = ct.equals("application/pdf") || ct.equals("application/msword")
+                || ct.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        if (!ok) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only PDF or Word documents are allowed");
+        Asset a = new Asset(); a.setName(file.getOriginalFilename()); a.setContentType(ct); a.setData(file.getBytes());
+        Asset saved = assets.save(a);
+        return Map.of("url", "/api/assets/" + saved.getId(), "name", file.getOriginalFilename());
+    }
+
+    // ---- founders (About us -> Founders page) ----
+    @GetMapping("/founders") public List<Founder> listFounders() { return founders.findAllByOrderBySortOrderAsc(); }
+
+    @PostMapping("/founders")
+    public Founder addFounder(@RequestBody FounderReq r) {
+        if (r.name() == null || r.name().isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Enter a name");
+        int next = founders.findAllByOrderBySortOrderAsc().stream().mapToInt(Founder::getSortOrder).max().orElse(-1) + 1;
+        Founder f = new Founder(); f.setName(r.name()); f.setText(r.text()); f.setImageUrl(r.imageUrl()); f.setSortOrder(next);
+        return founders.save(f);
+    }
+
+    @PutMapping("/founders/{id}")
+    public Founder updateFounder(@PathVariable Long id, @RequestBody FounderReq r) {
+        Founder f = founders.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        f.setName(r.name()); f.setText(r.text()); f.setImageUrl(r.imageUrl());
+        return founders.save(f);
+    }
+
+    @DeleteMapping("/founders/{id}") public void deleteFounder(@PathVariable Long id) { founders.deleteById(id); }
+
+    /** Swaps this founder's position with the one immediately before ("up") or after ("down") it. */
+    @PutMapping("/founders/{id}/move")
+    public List<Founder> moveFounder(@PathVariable Long id, @RequestParam String dir) {
+        List<Founder> ordered = founders.findAllByOrderBySortOrderAsc();
+        int i = -1; for (int k = 0; k < ordered.size(); k++) if (ordered.get(k).getId().equals(id)) { i = k; break; }
+        if (i < 0) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        int j = "up".equals(dir) ? i - 1 : i + 1;
+        if (j >= 0 && j < ordered.size()) {
+            Founder a = ordered.get(i), b = ordered.get(j);
+            int tmp = a.getSortOrder(); a.setSortOrder(b.getSortOrder()); b.setSortOrder(tmp);
+            founders.save(a); founders.save(b);
+        }
+        return founders.findAllByOrderBySortOrderAsc();
     }
 
     // ---- front-page banner photos ----

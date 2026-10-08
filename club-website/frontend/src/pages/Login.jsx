@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useConfig } from '../config.js';
+import { useLang } from '../i18n/index.jsx';
 
 const EMPTY = { username: '', email: '', password: '', confirmPassword: '', mobilePhone: '', name: '', surname: '', consentPrivacy: false, consentMarketing: false };
 
@@ -15,6 +16,7 @@ function fillTemplate(template, vars) {
 
 export default function Login() {
   const cfg = useConfig();
+  const { t } = useLang();
   const [mode, setMode] = useState('login');
   const [f, setF] = useState({ identifier: '', password: '', ...EMPTY });
   const [err, setErr] = useState('');
@@ -43,8 +45,8 @@ export default function Login() {
           setNotice(res.message);
         } finally { setBusy(false); }
       } else {
-        if (f.password !== f.confirmPassword) { setErr("Passwords don't match."); return; }
-        if (!f.consentPrivacy) { setErr('Please accept the data storage terms to create an account.'); return; }
+        if (f.password !== f.confirmPassword) { setErr(t('login.passwordsNoMatch')); return; }
+        if (!f.consentPrivacy) { setErr(t('login.acceptPrivacy')); return; }
         const { username, email, password, mobilePhone, name, surname, consentPrivacy, consentMarketing } = f;
         const res = await api.post('/auth/register', { username, email, password, mobilePhone, name, surname, consentPrivacy, consentMarketing });
         setNotice(res.message);
@@ -58,20 +60,20 @@ export default function Login() {
 
   return (
     <form className="auth" onSubmit={submit}>
-      <h2>{mode === 'login' ? 'Log in' : mode === 'forgot' ? 'Reset your password' : 'Create your account'}</h2>
+      <h2>{mode === 'login' ? t('login.loginTitle') : mode === 'forgot' ? t('login.forgotTitle') : t('login.signupTitle')}</h2>
 
       {mode === 'signup' && (
         <>
-          <label>First name<input value={f.name} onChange={set('name')} required /></label>
-          <label>Surname<input value={f.surname} onChange={set('surname')} required /></label>
-          <label>Username<input value={f.username} onChange={set('username')} required minLength={3} /></label>
-          <label>Email<input type="email" value={f.email} onChange={set('email')} required /></label>
-          <label>Mobile phone
+          <label>{t('login.firstName')}<input value={f.name} onChange={set('name')} required /></label>
+          <label>{t('login.surname')}<input value={f.surname} onChange={set('surname')} required /></label>
+          <label>{t('login.username')}<input value={f.username} onChange={set('username')} required minLength={3} /></label>
+          <label>{t('login.email')}<input type="email" value={f.email} onChange={set('email')} required /></label>
+          <label>{t('login.mobilePhone')}
             <input type="tel" value={f.mobilePhone} onChange={set('mobilePhone')} required
                    pattern="\+?[0-9]{7,15}" title="7-15 digits, optionally starting with +, no spaces" placeholder="e.g. +38970123456" />
           </label>
-          <label>Password<input type="password" value={f.password} onChange={set('password')} required minLength={6} /></label>
-          <label>Confirm password<input type="password" value={f.confirmPassword} onChange={set('confirmPassword')} required minLength={6} /></label>
+          <label>{t('login.password')}<input type="password" value={f.password} onChange={set('password')} required minLength={6} /></label>
+          <label>{t('login.confirmPassword')}<input type="password" value={f.confirmPassword} onChange={set('confirmPassword')} required minLength={6} /></label>
 
           <label className="check">
             <input type="checkbox" checked={f.consentPrivacy} onChange={setCheck('consentPrivacy')} required />
@@ -79,47 +81,47 @@ export default function Login() {
           </label>
           <label className="check">
             <input type="checkbox" checked={f.consentMarketing} onChange={setCheck('consentMarketing')} />
-            <span>{fillTemplate(cfg.consentMarketingText, vars)} <span className="muted">(optional)</span></span>
+            <span>{fillTemplate(cfg.consentMarketingText, vars)} <span className="muted">{t('login.optional')}</span></span>
           </label>
         </>
       )}
 
       {mode === 'login' && (
         <>
-          <label>Username or email<input value={f.identifier} onChange={set('identifier')} required /></label>
-          <label>Password<input type="password" value={f.password} onChange={set('password')} required /></label>
+          <label>{t('login.usernameOrEmail')}<input value={f.identifier} onChange={set('identifier')} required /></label>
+          <label>{t('login.password')}<input type="password" value={f.password} onChange={set('password')} required /></label>
         </>
       )}
 
       {mode === 'forgot' && (
-        <label>Email<input type="email" value={f.email} onChange={set('email')} required /></label>
+        <label>{t('login.email')}<input type="email" value={f.email} onChange={set('email')} required /></label>
       )}
 
       {notice && <p className="ok">{notice}</p>}
       {err && <p className="err">{err}</p>}
-      {mode !== 'forgot' && <button className="btn">{mode === 'login' ? 'Log in' : 'Sign up'}</button>}
-      {mode === 'forgot' && <button className="btn" disabled={busy}>{busy ? 'Sending…' : 'Send reset link'}</button>}
+      {mode !== 'forgot' && <button className="btn">{mode === 'login' ? t('login.logIn') : t('login.signUp')}</button>}
+      {mode === 'forgot' && <button className="btn" disabled={busy}>{busy ? t('login.sending') : t('login.sendResetLink')}</button>}
 
       {mode === 'login' && (
         <p className="muted">
-          <button type="button" className="link dark" onClick={() => switchMode('forgot')}>Forgot your password?</button>
+          <button type="button" className="link dark" onClick={() => switchMode('forgot')}>{t('login.forgotPassword')}</button>
         </p>
       )}
 
       {mode !== 'forgot' && (
         <p className="muted">
-          {mode === 'login' ? 'New member? ' : 'Already have an account? '}
+          {mode === 'login' ? t('login.newMember') : t('login.alreadyHaveAccount')}
           <button type="button" className="link dark" onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')}>
-            {mode === 'login' ? 'Sign up' : 'Log in'}
+            {mode === 'login' ? t('login.signUp') : t('login.logIn')}
           </button>
         </p>
       )}
       {mode === 'forgot' && (
         <p className="muted">
-          <button type="button" className="link dark" onClick={() => switchMode('login')}>Back to log in</button>
+          <button type="button" className="link dark" onClick={() => switchMode('login')}>{t('login.backToLogin')}</button>
         </p>
       )}
-      {mode === 'signup' && <p className="muted">A club admin has to approve your account before you can log in.</p>}
+      {mode === 'signup' && <p className="muted">{t('login.needsApproval')}</p>}
     </form>
   );
 }

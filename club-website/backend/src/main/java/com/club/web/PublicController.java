@@ -14,15 +14,19 @@ import java.util.*;
 public class PublicController {
     private final NewsRepo news; private final GameRepo games; private final StandingRepo standings;
     private final SettingRepo settings; private final AssetRepo assets; private final HeroImageRepo heroImages;
+    private final FounderRepo founders;
 
     public PublicController(NewsRepo news, GameRepo games, StandingRepo standings, SettingRepo settings,
-                             AssetRepo assets, HeroImageRepo heroImages) {
+                             AssetRepo assets, HeroImageRepo heroImages, FounderRepo founders) {
         this.news = news; this.games = games; this.standings = standings; this.settings = settings;
-        this.assets = assets; this.heroImages = heroImages;
+        this.assets = assets; this.heroImages = heroImages; this.founders = founders;
     }
 
     /** Front-page banner photos, in display order. */
     @GetMapping("/hero-images") public List<HeroImage> heroImages() { return heroImages.findAllByOrderBySortOrderAsc(); }
+
+    /** Founders/board members shown on the About us -> Founders page, in display order. */
+    @GetMapping("/founders") public List<Founder> founders() { return founders.findAllByOrderBySortOrderAsc(); }
 
     @GetMapping("/news") public List<News> news() { return news.findAllByOrderByCreatedAtDesc(); }
     @GetMapping("/news/{id}") public News newsOne(@PathVariable Long id) {
@@ -50,7 +54,11 @@ public class PublicController {
     @GetMapping("/assets/{id}")
     public ResponseEntity<byte[]> asset(@PathVariable Long id) {
         Asset a = assets.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        return ResponseEntity.ok().contentType(MediaType.parseMediaType(a.getContentType()))
-                .cacheControl(CacheControl.maxAge(Duration.ofDays(7))).body(a.getData());
+        ResponseEntity.BodyBuilder res = ResponseEntity.ok().contentType(MediaType.parseMediaType(a.getContentType()))
+                .cacheControl(CacheControl.maxAge(Duration.ofDays(7)));
+        // Lets a downloaded file (e.g. the club statute PDF) keep its original name instead of just its numeric id.
+        if (a.getName() != null && !a.getName().isBlank())
+            res.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + a.getName().replace("\"", "'") + "\"");
+        return res.body(a.getData());
     }
 }

@@ -3,6 +3,7 @@ import { Routes, Route, NavLink, Link, Navigate, Outlet, useLocation } from 'rea
 import { api } from './api.js';
 import { useAuth } from './auth.jsx';
 import { ConfigCtx } from './config.js';
+import { useLang, LanguageSwitcher } from './i18n/index.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import Home from './pages/Home.jsx';
 import NewsPage from './pages/NewsPage.jsx';
@@ -33,6 +34,7 @@ export default function App() {
   const [config, setConfig] = useState({});
   const [navOpen, setNavOpen] = useState(false);
   const { user, logout, isAdmin } = useAuth();
+  const { t } = useLang();
   const location = useLocation();
 
   useEffect(() => { api.get('/config').then(setConfig).catch(() => {}); }, []);
@@ -68,12 +70,13 @@ export default function App() {
               <span /><span /><span />
             </button>
             <nav className={navOpen ? 'open' : ''}>
-              <NavLink to="/" end>Home</NavLink>
-              <NavLink to="/news">News</NavLink>
-              <NavLink to="/about">About us</NavLink>
-              {user && <NavLink to="/account">My subscription</NavLink>}
-              {isAdmin && <NavLink to="/admin">Admin</NavLink>}
-              {user ? <button className="link" onClick={logout}>Log out</button> : <NavLink to="/login">Log in</NavLink>}
+              <NavLink to="/" end>{t('nav.home')}</NavLink>
+              <NavLink to="/news">{t('nav.news')}</NavLink>
+              <NavLink to="/about">{t('nav.about')}</NavLink>
+              {user && <NavLink to="/account">{t('nav.account')}</NavLink>}
+              {isAdmin && <NavLink to="/admin">{t('nav.admin')}</NavLink>}
+              {user ? <button className="link" onClick={logout}>{t('nav.logout')}</button> : <NavLink to="/login">{t('nav.login')}</NavLink>}
+              <LanguageSwitcher />
             </nav>
           </div>
         </div>

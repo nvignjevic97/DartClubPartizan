@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { api, fmtDate } from '../api.js';
 import { useAuth } from '../auth.jsx';
+import { useLang } from '../i18n/index.jsx';
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
 export default function Account() {
   const { user } = useAuth();
+  const { t } = useLang();
   const [month, setMonth] = useState(thisMonth());
   const [file, setFile] = useState(null);
   const [list, setList] = useState([]);
@@ -21,37 +23,37 @@ export default function Account() {
   async function submit(e) {
     e.preventDefault(); setMsg(''); setErr('');
     const form = new FormData(); form.append('month', month); form.append('file', file);
-    try { await api.upload('/payments', form); setMsg('Document uploaded. The club will confirm it soon.'); setFile(null); e.target.reset(); load(); }
+    try { await api.upload('/payments', form); setMsg(t('account.uploaded')); setFile(null); e.target.reset(); load(); }
     catch (ex) { setErr(ex.message); }
   }
 
   return (
     <div className="narrow">
-      <h2 className="sec">Hello, {user.name} {user.surname}</h2>
+      <h2 className="sec">{t('account.hello')} {user.name} {user.surname}</h2>
 
       <Membership status={status} suspensionRequested={suspensionRequested} onChange={loadStatus} />
 
       {status === 'SUSPENDED' ? (
-        <p className="box muted">Your membership is paused, so there's nothing to pay right now.</p>
+        <p className="box muted">{t('account.membershipPaused')}</p>
       ) : (
         <form className="box" onSubmit={submit}>
-          <h3>Upload subscription proof</h3>
-          <p className="muted">One photo or PDF per month. You can replace it until the club confirms it.</p>
-          <label>Month<input type="month" value={month} min={user.memberSince || undefined} onChange={(e) => setMonth(e.target.value)} required /></label>
-          {user.memberSince && <p className="muted">You're a member from {user.memberSince} - that's the earliest month you can submit.</p>}
-          <label>Document<input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files[0])} required /></label>
+          <h3>{t('account.uploadTitle')}</h3>
+          <p className="muted">{t('account.uploadHint')}</p>
+          <label>{t('account.month')}<input type="month" value={month} min={user.memberSince || undefined} onChange={(e) => setMonth(e.target.value)} required /></label>
+          {user.memberSince && <p className="muted">{t('account.memberFrom')} {user.memberSince} {t('account.earliestMonth')}</p>}
+          <label>{t('account.document')}<input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files[0])} required /></label>
           {msg && <p className="ok">{msg}</p>}{err && <p className="err">{err}</p>}
-          <button className="btn" disabled={!file}>Upload document</button>
+          <button className="btn" disabled={!file}>{t('account.uploadBtn')}</button>
         </form>
       )}
 
-      <h3>Your months</h3>
-      {list.length === 0 && <p className="muted">Nothing uploaded yet.</p>}
+      <h3>{t('account.yourMonths')}</h3>
+      {list.length === 0 && <p className="muted">{t('account.nothingUploaded')}</p>}
       <table className="tbl wide">
-        <thead><tr><th>Month</th><th>File</th><th>Uploaded</th><th>Status</th></tr></thead>
+        <thead><tr><th>{t('account.colMonth')}</th><th>{t('account.colFile')}</th><th>{t('account.colUploaded')}</th><th>{t('account.colStatus')}</th></tr></thead>
         <tbody>{list.map((p) => (
           <tr key={p.id}><td>{p.month}</td><td>{p.fileName}</td><td>{fmtDate(p.uploadedAt)}</td>
-            <td><span className={'tag ' + p.status}>{p.status === 'PAID' ? 'Confirmed' : 'Waiting for review'}</span></td></tr>
+            <td><span className={'tag ' + p.status}>{p.status === 'PAID' ? t('account.confirmed') : t('account.waitingReview')}</span></td></tr>
         ))}</tbody>
       </table>
     </div>
@@ -61,6 +63,7 @@ export default function Account() {
 /** Lets a member ask to pause or resume their own membership. The request needs a club admin to
  * confirm it before it actually takes effect - this just flags it for them. */
 function Membership({ status, suspensionRequested, onChange }) {
+  const { t } = useLang();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
@@ -75,30 +78,28 @@ function Membership({ status, suspensionRequested, onChange }) {
 
   return (
     <div className="box">
-      <h3>Membership</h3>
+      <h3>{t('account.membership')}</h3>
       <p>
-        Status: <span className={'tag ' + status}>{status === 'APPROVED' ? 'Active' : 'Paused'}</span>
+        {t('account.status')}: <span className={'tag ' + status}>{status === 'APPROVED' ? t('account.active') : t('account.paused')}</span>
       </p>
       {err && <p className="err">{err}</p>}
 
       {suspensionRequested ? (
         <>
           <p className="muted">
-            {status === 'APPROVED'
-              ? "You've asked to pause your membership - waiting for the club to confirm it."
-              : "You've asked to resume your membership - waiting for the club to confirm it."}
+            {status === 'APPROVED' ? t('account.askedPause') : t('account.askedResume')}
           </p>
-          <button className="btn small ghost" disabled={busy} onClick={() => act('cancel-request')}>Cancel request</button>
+          <button className="btn small ghost" disabled={busy} onClick={() => act('cancel-request')}>{t('account.cancelRequest')}</button>
         </>
       ) : status === 'APPROVED' ? (
         <>
-          <p className="muted">Pausing your membership means you won't owe any subscription payments until you resume it. You can still log in.</p>
-          <button className="btn small ghost" disabled={busy} onClick={() => act('request-suspend')}>Request to pause membership</button>
+          <p className="muted">{t('account.pauseHint')}</p>
+          <button className="btn small ghost" disabled={busy} onClick={() => act('request-suspend')}>{t('account.requestPause')}</button>
         </>
       ) : (
         <>
-          <p className="muted">Ready to come back? Ask the club to resume your membership.</p>
-          <button className="btn small" disabled={busy} onClick={() => act('request-reactivate')}>Request to resume membership</button>
+          <p className="muted">{t('account.resumeHint')}</p>
+          <button className="btn small" disabled={busy} onClick={() => act('request-reactivate')}>{t('account.requestResume')}</button>
         </>
       )}
     </div>

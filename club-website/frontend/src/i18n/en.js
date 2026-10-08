@@ -1,0 +1,53 @@
+export default {
+  nav: {
+    home: 'Home', news: 'News', about: 'About us', account: 'My subscription', admin: 'Admin',
+    logout: 'Log out', login: 'Log in',
+  },
+  sidebar: {
+    nextMatches: 'Next matches', noMatches: 'No matches scheduled.',
+    latestResults: 'Latest results', noResults: 'No results yet.',
+    leagueTable: 'League table', tableEmpty: 'Table is empty.',
+    vs: 'vs', rank: '#', team: 'Team', won: 'W', lost: 'L', points: 'Pts',
+  },
+  home: {
+    latestNews: 'Latest news', noNews: 'No news posted yet.',
+  },
+  news: {
+    news: 'News', allNews: 'All news', backToAll: '← All news',
+  },
+  about: {
+    tabAbout: 'About us', tabFounders: 'Founders', tabStatute: 'Club Statute',
+    contact: 'Contact', noFounders: 'No founders listed yet.',
+    statuteIntroEmpty: 'The club statute has not been published yet.',
+    downloadStatute: 'Download the statute', noStatuteFile: 'No document uploaded yet.',
+  },
+  login: {
+    loginTitle: 'Log in', forgotTitle: 'Reset your password', signupTitle: 'Create your account',
+    firstName: 'First name', surname: 'Surname', username: 'Username', email: 'Email',
+    mobilePhone: 'Mobile phone', password: 'Password', confirmPassword: 'Confirm password',
+    usernameOrEmail: 'Username or email', optional: '(optional)',
+    logIn: 'Log in', signUp: 'Sign up', sending: 'Sending…', sendResetLink: 'Send reset link',
+    forgotPassword: 'Forgot your password?', newMember: 'New member? ', alreadyHaveAccount: 'Already have an account? ',
+    backToLogin: 'Back to log in', needsApproval: 'A club admin has to approve your account before you can log in.',
+    passwordsNoMatch: "Passwords don't match.", acceptPrivacy: 'Please accept the data storage terms to create an account.',
+  },
+  account: {
+    hello: 'Hello,', uploadTitle: 'Upload subscription proof',
+    uploadHint: 'One photo or PDF per month. You can replace it until the club confirms it.',
+    month: 'Month', memberFrom: "You're a member from", earliestMonth: '- that is the earliest month you can submit.',
+    document: 'Document', uploadBtn: 'Upload document', uploaded: 'Document uploaded. The club will confirm it soon.',
+    yourMonths: 'Your months', nothingUploaded: 'Nothing uploaded yet.',
+    colMonth: 'Month', colFile: 'File', colUploaded: 'Uploaded', colStatus: 'Status',
+    confirmed: 'Confirmed', waitingReview: 'Waiting for review',
+    membershipPaused: "Your membership is paused, so there's nothing to pay right now.",
+    membership: 'Membership', status: 'Status', active: 'Active', paused: 'Paused',
+    askedPause: "You've asked to pause your membership - waiting for the club to confirm it.",
+    askedResume: "You've asked to resume your membership - waiting for the club to confirm it.",
+    cancelRequest: 'Cancel request',
+    pauseHint: "Pausing your membership means you won't owe any subscription payments until you resume it. You can still log in.",
+    requestPause: 'Request to pause membership',
+    resumeHint: 'Ready to come back? Ask the club to resume your membership.',
+    requestResume: 'Request to resume membership',
+  },
+  common: { language: 'Language' },
+};

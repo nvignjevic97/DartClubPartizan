@@ -1,0 +1,53 @@
+export default {
+  nav: {
+    home: 'Pocetna', news: 'Vesti', about: 'O nama', account: 'Moja clanarina', admin: 'Admin',
+    logout: 'Odjava', login: 'Prijava',
+  },
+  sidebar: {
+    nextMatches: 'Naredni mecevi', noMatches: 'Nema zakazanih meceva.',
+    latestResults: 'Poslednji rezultati', noResults: 'Jos nema rezultata.',
+    leagueTable: 'Tabela lige', tableEmpty: 'Tabela je prazna.',
+    vs: ':', rank: '#', team: 'Klub', won: 'Pob', lost: 'Por', points: 'Bod',
+  },
+  home: {
+    latestNews: 'Najnovije vesti', noNews: 'Jos nema objavljenih vesti.',
+  },
+  news: {
+    news: 'Vest', allNews: 'Sve vesti', backToAll: '← Sve vesti',
+  },
+  about: {
+    tabAbout: 'O nama', tabFounders: 'Osnivaci', tabStatute: 'Statut kluba',
+    contact: 'Kontakt', noFounders: 'Osnivaci jos nisu dodati.',
+    statuteIntroEmpty: 'Statut kluba jos nije objavljen.',
+    downloadStatute: 'Preuzmi statut', noStatuteFile: 'Dokument jos nije postavljen.',
+  },
+  login: {
+    loginTitle: 'Prijava', forgotTitle: 'Resetujte lozinku', signupTitle: 'Napravite nalog',
+    firstName: 'Ime', surname: 'Prezime', username: 'Korisnicko ime', email: 'Email',
+    mobilePhone: 'Broj telefona', password: 'Lozinka', confirmPassword: 'Potvrdite lozinku',
+    usernameOrEmail: 'Korisnicko ime ili email', optional: '(opciono)',
+    logIn: 'Prijavi se', signUp: 'Registruj se', sending: 'Slanje…', sendResetLink: 'Posalji link za reset',
+    forgotPassword: 'Zaboravili ste lozinku?', newMember: 'Novi clan? ', alreadyHaveAccount: 'Vec imate nalog? ',
+    backToLogin: 'Nazad na prijavu', needsApproval: 'Admin kluba mora odobriti vas nalog pre nego sto se budete mogli prijaviti.',
+    passwordsNoMatch: 'Lozinke se ne podudaraju.', acceptPrivacy: 'Molimo prihvatite uslove o cuvanju podataka da biste napravili nalog.',
+  },
+  account: {
+    hello: 'Zdravo,', uploadTitle: 'Otpremite dokaz o clanarini',
+    uploadHint: 'Jedna slika ili PDF po mesecu. Mozete je zameniti dok je klub ne potvrdi.',
+    month: 'Mesec', memberFrom: 'Clan ste od', earliestMonth: '- to je najraniji mesec koji mozete poslati.',
+    document: 'Dokument', uploadBtn: 'Otpremi dokument', uploaded: 'Dokument je otpremljen. Klub ce ga uskoro potvrditi.',
+    yourMonths: 'Vasi meseci', nothingUploaded: 'Jos nista nije otpremljeno.',
+    colMonth: 'Mesec', colFile: 'Fajl', colUploaded: 'Otpremljeno', colStatus: 'Status',
+    confirmed: 'Potvrdjeno', waitingReview: 'Ceka proveru',
+    membershipPaused: 'Vasa clanarina je pauzirana, pa trenutno nemate nista za placanje.',
+    membership: 'Clanstvo', status: 'Status', active: 'Aktivno', paused: 'Pauzirano',
+    askedPause: 'Zatrazili ste pauziranje clanstva - ceka se potvrda kluba.',
+    askedResume: 'Zatrazili ste nastavak clanstva - ceka se potvrda kluba.',
+    cancelRequest: 'Otkazi zahtev',
+    pauseHint: 'Pauziranjem clanstva necete dugovati clanarinu dok ga ne nastavite. I dalje mozete da se prijavljujete.',
+    requestPause: 'Zatrazi pauziranje clanstva',
+    resumeHint: 'Spremni da se vratite? Zatrazite od kluba da nastavi vase clanstvo.',
+    requestResume: 'Zatrazi nastavak clanstva',
+  },
+  common: { language: 'Jezik' },
+};

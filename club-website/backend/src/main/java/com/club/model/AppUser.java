@@ -48,6 +48,14 @@ public class AppUser {
     private Boolean consentPrivacy = Boolean.FALSE;
     /** Consent to marketing emails, including via third-party marketing services - required at sign-up. */
     private Boolean consentMarketing = Boolean.FALSE;
+    /**
+     * Consent to account-related emails (welcome, approval/rejection, password reset, membership
+     * pause/resume, payment reminders) - required at sign-up, unlike the marketing consent above.
+     * Defaults to true (via the column default) so existing members from before this field existed
+     * keep receiving these emails without needing to re-consent.
+     */
+    @Column(columnDefinition = "boolean default true")
+    private Boolean consentAccountEmails = Boolean.TRUE;
     /** When the two consents above were given (sign-up time). */
     private Instant consentAt;
 }

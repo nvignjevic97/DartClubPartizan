@@ -43,10 +43,16 @@ public class AdminController {
     }
 
     // ---- news ----
-    @PostMapping("/news") public News createNews(@RequestBody News n) { n.setId(null); n.setCreatedAt(java.time.Instant.now()); return news.save(n); }
+    @PostMapping("/news")
+    public News createNews(@RequestBody News n) {
+        n.setId(null); n.setCreatedAt(java.time.Instant.now());
+        if (n.getPublishedAt() == null) n.setPublishedAt(java.time.LocalDateTime.now());
+        return news.save(n);
+    }
     @PutMapping("/news/{id}") public News updateNews(@PathVariable Long id, @RequestBody News n) {
         News old = news.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         old.setTitle(n.getTitle()); old.setContent(n.getContent()); old.setImageUrl(n.getImageUrl());
+        old.setPublishedAt(n.getPublishedAt() == null ? old.getPublishedAt() : n.getPublishedAt());
         return news.save(old);
     }
     @DeleteMapping("/news/{id}") public void deleteNews(@PathVariable Long id) { news.deleteById(id); }

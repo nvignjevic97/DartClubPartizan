@@ -28,7 +28,7 @@ public class PublicController {
     /** Founders/board members shown on the About us -> Founders page, in display order. */
     @GetMapping("/founders") public List<Founder> founders() { return founders.findAllByOrderBySortOrderAsc(); }
 
-    @GetMapping("/news") public List<News> news() { return news.findAllByOrderByCreatedAtDesc(); }
+    @GetMapping("/news") public List<News> news() { return news.findAllByOrderByPublishedAtDesc(); }
     @GetMapping("/news/{id}") public News newsOne(@PathVariable Long id) {
         return news.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "News not found"));
     }

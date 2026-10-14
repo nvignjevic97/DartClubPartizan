@@ -30,6 +30,7 @@ export default {
     forgotPassword: 'Forgot your password?', newMember: 'New member? ', alreadyHaveAccount: 'Already have an account? ',
     backToLogin: 'Back to log in', needsApproval: 'A club admin has to approve your account before you can log in.',
     passwordsNoMatch: "Passwords don't match.", acceptPrivacy: 'Please accept the data storage terms to create an account.',
+    acceptAccountEmails: 'Please agree to receive account-related emails to create an account.',
   },
   account: {
     hello: 'Hello,', uploadTitle: 'Upload subscription proof',

@@ -22,7 +22,7 @@ public class AuthController {
     private static final Pattern PHONE = Pattern.compile("^\\+?[0-9]{7,15}$");
 
     public record RegisterReq(String username, String email, String password, String mobilePhone, String name, String surname,
-                               Boolean consentPrivacy, Boolean consentMarketing) {}
+                               Boolean consentPrivacy, Boolean consentMarketing, Boolean consentAccountEmails) {}
     public record LoginReq(String identifier, String password) {}
     public record AuthRes(String token, String username, String email, String name, String surname, String role, String memberSince,
                            String status, boolean suspensionRequested) {}
@@ -59,6 +59,8 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Enter your surname");
         if (!Boolean.TRUE.equals(r.consentPrivacy()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You must agree to the data storage terms to create an account");
+        if (!Boolean.TRUE.equals(r.consentAccountEmails()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You must agree to receive account-related emails to create an account");
         // Marketing consent is optional: members can join without agreeing to marketing emails.
         if (users.existsByUsername(r.username().trim().toLowerCase()))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This username is already taken");
@@ -76,6 +78,7 @@ public class AuthController {
         u.setStatus(AccountStatus.PENDING);
         u.setConsentPrivacy(true);
         u.setConsentMarketing(Boolean.TRUE.equals(r.consentMarketing()));
+        u.setConsentAccountEmails(true);
         u.setConsentAt(Instant.now());
         users.save(u);
         mail.sendWelcomePending(u);

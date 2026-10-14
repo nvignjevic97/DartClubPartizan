@@ -7,7 +7,8 @@ import { api } from '../api.js';
  * listPath: public GET path; adminPath: base path for POST/PUT/DELETE.
  */
 export default function Crud({ title, listPath, adminPath, fields, summary }) {
-  const empty = Object.fromEntries(fields.map((f) => [f.name, f.type === 'number' ? 0 : '']));
+  const empty = Object.fromEntries(fields.map((f) => [f.name,
+    f.default !== undefined ? (typeof f.default === 'function' ? f.default() : f.default) : f.type === 'number' ? 0 : '']));
   const [rows, setRows] = useState([]);
   const [item, setItem] = useState(empty);
   const [err, setErr] = useState('');

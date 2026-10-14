@@ -97,6 +97,13 @@ public class MailService {
     }
 
     private void send(AppUser u, String settingPrefix, String defaultSubject, String defaultBody, Map<String, String> extraVars) {
+        // Account-related emails (everything routed through this method) require consent at sign-up;
+        // only an explicit false (a member who somehow had it withdrawn) skips sending - a null, from
+        // a row that predates this field, is treated as consented so existing members keep getting them.
+        if (Boolean.FALSE.equals(u.getConsentAccountEmails())) {
+            log.info("Skipping '{}' email to {} - account emails consent not given", settingPrefix, u.getEmail());
+            return;
+        }
         Map<String, String> vars = baseVars(u);
         if (extraVars != null) vars.putAll(extraVars);
 

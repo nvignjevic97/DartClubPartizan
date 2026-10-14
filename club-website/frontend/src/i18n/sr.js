@@ -30,6 +30,7 @@ export default {
     forgotPassword: 'Zaboravili ste lozinku?', newMember: 'Novi član? ', alreadyHaveAccount: 'Već imate nalog? ',
     backToLogin: 'Nazad na prijavu', needsApproval: 'Admin kluba mora odobriti vaš nalog pre nego što se budete mogli prijaviti.',
     passwordsNoMatch: 'Lozinke se ne podudaraju.', acceptPrivacy: 'Molimo prihvatite uslove o čuvanju podataka da biste napravili nalog.',
+    acceptAccountEmails: 'Molimo prihvatite primanje email poruka vezanih za nalog da biste napravili nalog.',
   },
   account: {
     hello: 'Zdravo,', uploadTitle: 'Otpremite dokaz o članarini',

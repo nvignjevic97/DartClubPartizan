@@ -5,6 +5,12 @@ import Crud from '../components/Crud.jsx';
 
 const TABS = ['Accounts', 'Subscriptions', 'News', 'Matches', 'League table', 'Founders', 'Club Statute', 'Email templates', 'Marketing emails', 'Site settings'];
 
+// datetime-local inputs need "YYYY-MM-DDTHH:mm" in LOCAL time - toISOString() would give UTC and shift the displayed time.
+function nowLocal() {
+  const d = new Date(); const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function Admin() {
   const [tab, setTab] = useState(TABS[0]);
   const [pendingCount, setPendingCount] = useState(0);
@@ -20,8 +26,9 @@ export default function Admin() {
       {tab === 'Accounts' && <Accounts onCount={setPendingCount} />}
       {tab === 'Subscriptions' && <Subscriptions />}
       {tab === 'News' && <Crud title="news" listPath="/news" adminPath="/admin/news"
-        fields={[{ name: 'title', label: 'Title', type: 'text' }, { name: 'content', label: 'Text', type: 'textarea' }, { name: 'imageUrl', label: 'Picture', type: 'image' }]}
-        summary={(n) => `${n.title} (${fmtDate(n.createdAt)})`} />}
+        fields={[{ name: 'title', label: 'Title', type: 'text' }, { name: 'content', label: 'Text', type: 'textarea' }, { name: 'imageUrl', label: 'Picture', type: 'image' },
+          { name: 'publishedAt', label: 'Published date (backdate if needed)', type: 'datetime', default: nowLocal }]}
+        summary={(n) => `${n.title} (${fmtDate(n.publishedAt)})`} />}
       {tab === 'Matches' && <Crud title="match" listPath="/matches" adminPath="/admin/matches"
         fields={[{ name: 'homeTeam', label: 'Home team', type: 'text' }, { name: 'awayTeam', label: 'Away team', type: 'text' },
           { name: 'kickoff', label: 'Kick-off', type: 'datetime' }, { name: 'venue', label: 'Venue', type: 'text', optional: true },
@@ -407,7 +414,8 @@ const SETTINGS = [
   ['clubName', 'Club name', 'text'], ['tagline', 'Tagline', 'text'], ['logoUrl', 'Logo', 'image'],
   ['aboutText', 'About us text', 'textarea'], ['accentColor', 'Accent colour', 'color'], ['contactEmail', 'Contact email', 'text'], ['footerText', 'Footer text', 'text'],
   ['consentPrivacyText', 'Sign-up checkbox 1: data storage consent', 'textarea'],
-  ['consentMarketingText', 'Sign-up checkbox 2: marketing consent', 'textarea'],
+  ['consentAccountEmailsText', 'Sign-up checkbox 2: account emails consent', 'textarea'],
+  ['consentMarketingText', 'Sign-up checkbox 3: marketing consent', 'textarea'],
 ];
 
 const EMAIL_TEMPLATES = [
@@ -714,7 +722,8 @@ function Settings() {
       {SETTINGS.map(([k, label, type]) => (
         <label key={k}>{label}
           {k === 'consentPrivacyText' && <span className="muted block">Shown next to checkbox 1 on sign-up. <code>{'{{clubName}}'}</code> is replaced automatically. Required - members can't sign up without accepting it.</span>}
-          {k === 'consentMarketingText' && <span className="muted block">Shown next to checkbox 2 on sign-up. <code>{'{{clubName}}'}</code> is replaced automatically. Optional - members can still sign up if they leave it unchecked.</span>}
+          {k === 'consentAccountEmailsText' && <span className="muted block">Shown next to checkbox 2 on sign-up. <code>{'{{clubName}}'}</code> is replaced automatically. Required - covers welcome, approval, password reset, membership and reminder emails (not marketing). Members who somehow have this turned off won't receive those emails.</span>}
+          {k === 'consentMarketingText' && <span className="muted block">Shown next to checkbox 3 on sign-up. <code>{'{{clubName}}'}</code> is replaced automatically. Optional - members can still sign up if they leave it unchecked.</span>}
           {type === 'textarea' ? <textarea rows={k.startsWith('consent') ? 3 : 6} value={v[k] ?? ''} onChange={(e) => setV({ ...v, [k]: e.target.value })} />
             : type === 'image' ? <>{v[k] && <img className="thumb" src={v[k]} alt="" />}<input type="file" accept="image/*" onChange={(e) => img(k, e.target.files[0])} />
               {v[k] && <button type="button" className="link dark" onClick={() => setV({ ...v, [k]: '' })}>Remove image</button>}</>

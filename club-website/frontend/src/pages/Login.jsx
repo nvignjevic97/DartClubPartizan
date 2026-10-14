@@ -5,7 +5,7 @@ import { useAuth } from '../auth.jsx';
 import { useConfig } from '../config.js';
 import { useLang } from '../i18n/index.jsx';
 
-const EMPTY = { username: '', email: '', password: '', confirmPassword: '', mobilePhone: '', name: '', surname: '', consentPrivacy: false, consentMarketing: false };
+const EMPTY = { username: '', email: '', password: '', confirmPassword: '', mobilePhone: '', name: '', surname: '', consentPrivacy: false, consentAccountEmails: false, consentMarketing: false };
 
 // Fills {{clubName}} etc. into admin-editable consent text, same mini-templating as the email templates.
 function fillTemplate(template, vars) {
@@ -47,8 +47,9 @@ export default function Login() {
       } else {
         if (f.password !== f.confirmPassword) { setErr(t('login.passwordsNoMatch')); return; }
         if (!f.consentPrivacy) { setErr(t('login.acceptPrivacy')); return; }
-        const { username, email, password, mobilePhone, name, surname, consentPrivacy, consentMarketing } = f;
-        const res = await api.post('/auth/register', { username, email, password, mobilePhone, name, surname, consentPrivacy, consentMarketing });
+        if (!f.consentAccountEmails) { setErr(t('login.acceptAccountEmails')); return; }
+        const { username, email, password, mobilePhone, name, surname, consentPrivacy, consentAccountEmails, consentMarketing } = f;
+        const res = await api.post('/auth/register', { username, email, password, mobilePhone, name, surname, consentPrivacy, consentAccountEmails, consentMarketing });
         setNotice(res.message);
         setMode('login');
         setF({ identifier: f.username, password: '', ...EMPTY });
@@ -78,6 +79,10 @@ export default function Login() {
           <label className="check">
             <input type="checkbox" checked={f.consentPrivacy} onChange={setCheck('consentPrivacy')} required />
             <span>{fillTemplate(cfg.consentPrivacyText, vars)}</span>
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={f.consentAccountEmails} onChange={setCheck('consentAccountEmails')} required />
+            <span>{fillTemplate(cfg.consentAccountEmailsText, vars)}</span>
           </label>
           <label className="check">
             <input type="checkbox" checked={f.consentMarketing} onChange={setCheck('consentMarketing')} />

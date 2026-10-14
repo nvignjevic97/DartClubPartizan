@@ -43,7 +43,7 @@ export default function Home() {
           {n.imageUrl && <img src={n.imageUrl} alt="" />}
           <div>
             <h3><Link to={`/news/${n.id}`}>{n.title}</Link></h3>
-            <div className="muted">{fmtDate(n.createdAt)}</div>
+            <div className="muted">{fmtDate(n.publishedAt)}</div>
             <p>{n.content.length > 200 ? n.content.slice(0, 200) + '…' : n.content}</p>
           </div>
         </article>

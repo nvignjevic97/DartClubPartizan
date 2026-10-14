@@ -32,6 +32,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         migrateStatusColumn();
+        backfillNewsPublishedAt();
         if (!users.existsByEmail(adminEmail)) {
             AppUser a = new AppUser();
             a.setUsername(adminUsername); a.setEmail(adminEmail);
@@ -77,6 +78,8 @@ public class DataInitializer implements CommandLineRunner {
         d.put("consentMarketingText", "I agree that {{clubName}} may use my email address to send me marketing "
                 + "communications, including by sharing it with third-party services used only for marketing "
                 + "purposes.");
+        d.put("consentAccountEmailsText", "I agree that {{clubName}} may email me about my account (sign-up "
+                + "status, approval, password resets, membership changes, and subscription reminders).");
 
         d.forEach((k, v) -> { if (!settings.existsById(k)) settings.save(new SiteSetting(k, v)); });
     }
@@ -94,6 +97,21 @@ public class DataInitializer implements CommandLineRunner {
             s.execute("ALTER TABLE users MODIFY COLUMN status VARCHAR(20) NOT NULL DEFAULT 'PENDING'");
         } catch (Exception e) {
             log.warn("Could not widen users.status to varchar (safe to ignore if it's already varchar): {}", e.getMessage());
+        }
+    }
+
+    /**
+     * News.publishedAt is a brand-new column added alongside the existing createdAt. Any news rows
+     * that existed before this feature will get published_at = NULL once the column is first added
+     * by ddl-auto - which would break the "order by publishedAt desc" sort and show no date on the
+     * live site. Backfill them once to their original createdAt value; harmless/idempotent once
+     * there's nothing left with a NULL published_at.
+     */
+    private void backfillNewsPublishedAt() {
+        try (Connection c = dataSource.getConnection(); Statement s = c.createStatement()) {
+            s.execute("UPDATE news SET published_at = created_at WHERE published_at IS NULL");
+        } catch (Exception e) {
+            log.warn("Could not backfill news.published_at: {}", e.getMessage());
         }
     }
 }

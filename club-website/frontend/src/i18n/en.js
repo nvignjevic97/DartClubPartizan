@@ -1,6 +1,6 @@
 export default {
   nav: {
-    home: 'Home', news: 'News', about: 'About us', account: 'My subscription', admin: 'Admin',
+    home: 'Home', news: 'News', about: 'About us', gallery: 'Gallery', account: 'My subscription', admin: 'Admin',
     logout: 'Log out', login: 'Log in',
   },
   sidebar: {
@@ -49,6 +49,10 @@ export default {
     requestPause: 'Request to pause membership',
     resumeHint: 'Ready to come back? Ask the club to resume your membership.',
     requestResume: 'Request to resume membership',
+  },
+  gallery: {
+    title: 'Gallery', tabPhotos: 'Photos', tabVideos: 'Videos',
+    noPhotos: 'No photos yet.', noVideos: 'No videos yet.',
   },
   common: { language: 'Language' },
 };

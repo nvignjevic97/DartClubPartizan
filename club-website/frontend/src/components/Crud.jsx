@@ -3,12 +3,14 @@ import { api } from '../api.js';
 
 /**
  * Generic admin editor: list + create/edit form.
- * fields: [{ name, label, type: text|textarea|number|datetime|image, hint? }]
+ * fields: [{ name, label, type: text|textarea|number|datetime|image|images, hint? }]
+ * (type "images" holds an array of uploaded image URLs, with add/remove - e.g. extra photos.)
  * listPath: public GET path; adminPath: base path for POST/PUT/DELETE.
  */
 export default function Crud({ title, listPath, adminPath, fields, summary }) {
   const empty = Object.fromEntries(fields.map((f) => [f.name,
-    f.default !== undefined ? (typeof f.default === 'function' ? f.default() : f.default) : f.type === 'number' ? 0 : '']));
+    f.default !== undefined ? (typeof f.default === 'function' ? f.default() : f.default)
+      : f.type === 'number' ? 0 : f.type === 'images' ? [] : '']));
   const [rows, setRows] = useState([]);
   const [item, setItem] = useState(empty);
   const [err, setErr] = useState('');
@@ -22,6 +24,21 @@ export default function Crud({ title, listPath, adminPath, fields, summary }) {
     if (!file) return;
     const form = new FormData(); form.append('file', file);
     try { const r = await api.upload('/admin/assets', form); set(k, r.url); } catch (e) { setErr(e.message); }
+  }
+
+  async function uploadImages(k, files) {
+    if (!files || !files.length) return;
+    for (const file of files) {
+      const form = new FormData(); form.append('file', file);
+      try {
+        const r = await api.upload('/admin/assets', form);
+        setItem((o) => ({ ...o, [k]: [...(o[k] || []), r.url] }));
+      } catch (e) { setErr(e.message); }
+    }
+  }
+
+  function removeImageAt(k, i) {
+    setItem((o) => ({ ...o, [k]: (o[k] || []).filter((_, j) => j !== i) }));
   }
 
   async function save(e) {
@@ -55,6 +72,18 @@ export default function Crud({ title, listPath, adminPath, fields, summary }) {
                 <>
                   {item[f.name] && <img className="thumb" src={item[f.name]} alt="" />}
                   <input type="file" accept="image/*" onChange={(e) => uploadImage(f.name, e.target.files[0])} />
+                </>
+              ) : f.type === 'images' ? (
+                <>
+                  <div className="thumb-row">
+                    {(item[f.name] || []).map((url, i) => (
+                      <span className="thumb-wrap" key={i}>
+                        <img className="thumb small" src={url} alt="" />
+                        <button type="button" className="thumb-remove" aria-label="Remove" onClick={() => removeImageAt(f.name, i)}>×</button>
+                      </span>
+                    ))}
+                  </div>
+                  <input type="file" accept="image/*" multiple onChange={(e) => uploadImages(f.name, Array.from(e.target.files))} />
                 </>
               ) : <input type={f.type === 'datetime' ? 'datetime-local' : f.type === 'number' || f.optionalNumber ? 'number' : 'text'}
                   value={item[f.name] ?? ''} onChange={(e) => set(f.name, e.target.value)} required={!f.optional && !f.optionalNumber} />}

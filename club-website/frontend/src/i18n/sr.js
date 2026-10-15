@@ -1,6 +1,6 @@
 export default {
   nav: {
-    home: 'Početna', news: 'Vesti', about: 'O nama', account: 'Moja članarina', admin: 'Admin',
+    home: 'Početna', news: 'Vesti', about: 'O nama', gallery: 'Galerija', account: 'Moja članarina', admin: 'Admin',
     logout: 'Odjava', login: 'Prijava',
   },
   sidebar: {
@@ -49,6 +49,10 @@ export default {
     requestPause: 'Zatraži pauziranje članstva',
     resumeHint: 'Spremni da se vratite? Zatražite od kluba da nastavi vaše članstvo.',
     requestResume: 'Zatraži nastavak članstva',
+  },
+  gallery: {
+    title: 'Galerija', tabPhotos: 'Slike', tabVideos: 'Video',
+    noPhotos: 'Još nema slika.', noVideos: 'Još nema video snimaka.',
   },
   common: { language: 'Jezik' },
 };

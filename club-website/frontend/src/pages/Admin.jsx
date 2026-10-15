@@ -3,7 +3,7 @@ import { api, fmtDate } from '../api.js';
 import { useConfig } from '../config.js';
 import Crud from '../components/Crud.jsx';
 
-const TABS = ['Accounts', 'Subscriptions', 'News', 'Matches', 'League table', 'Founders', 'Club Statute', 'Sponsors', 'Email templates', 'Marketing emails', 'Site settings'];
+const TABS = ['Accounts', 'Subscriptions', 'News', 'Matches', 'League table', 'Founders', 'Club Statute', 'Sponsors', 'Gallery', 'Email templates', 'Marketing emails', 'Site settings'];
 
 // datetime-local inputs need "YYYY-MM-DDTHH:mm" in LOCAL time - toISOString() would give UTC and shift the displayed time.
 function nowLocal() {
@@ -27,8 +27,9 @@ export default function Admin() {
       {tab === 'Subscriptions' && <Subscriptions />}
       {tab === 'News' && <Crud title="news" listPath="/news" adminPath="/admin/news"
         fields={[{ name: 'title', label: 'Title', type: 'text' },
-          { name: 'content', label: 'Text', type: 'textarea', hint: 'Tip: add a link by writing [link text](https://example.com) — e.g. [visit claude.ai](https://claude.ai)' },
-          { name: 'imageUrl', label: 'Picture', type: 'image' },
+          { name: 'content', label: 'Text', type: 'textarea', hint: 'Tip: add a link by writing [link text](web address) — the address works with or without https://' },
+          { name: 'imageUrl', label: 'Main picture', type: 'image' },
+          { name: 'photoUrls', label: 'More photos (shown below the text)', type: 'images', default: [] },
           { name: 'publishedAt', label: 'Published date (backdate if needed)', type: 'datetime', default: nowLocal }]}
         summary={(n) => `${n.title} (${fmtDate(n.publishedAt)})`} />}
       {tab === 'Matches' && <Crud title="match" listPath="/matches" adminPath="/admin/matches"
@@ -44,6 +45,7 @@ export default function Admin() {
       {tab === 'Founders' && <FoundersAdmin />}
       {tab === 'Club Statute' && <StatuteAdmin />}
       {tab === 'Sponsors' && <SponsorsAdmin />}
+      {tab === 'Gallery' && <GalleryAdmin />}
       {tab === 'Email templates' && <EmailTemplates />}
       {tab === 'Marketing emails' && <MarketingEmails />}
       {tab === 'Site settings' && <><HeroImages /><Settings /></>}
@@ -719,6 +721,95 @@ function SponsorsAdmin() {
         ))}
       </div>
     </div>
+  );
+}
+
+function GalleryAdmin() {
+  const [items, setItems] = useState([]);
+  const [err, setErr] = useState('');
+  const [busyPhotos, setBusyPhotos] = useState(false);
+  const [busyVideo, setBusyVideo] = useState(false);
+  const load = () => api.get('/admin/gallery').then(setItems).catch((e) => setErr(e.message));
+  useEffect(() => { load(); }, []);
+
+  const photos = items.filter((i) => i.type === 'PHOTO');
+  const videos = items.filter((i) => i.type === 'VIDEO');
+
+  async function addPhotos(files) {
+    if (!files || !files.length) return;
+    setBusyPhotos(true); setErr('');
+    try {
+      for (const file of files) {
+        const form = new FormData(); form.append('file', file);
+        const { url } = await api.upload('/admin/assets', form);
+        await api.post('/admin/gallery', { type: 'PHOTO', url });
+      }
+      await load();
+    } catch (e) { setErr(e.message); }
+    setBusyPhotos(false);
+  }
+
+  async function addVideo(file) {
+    if (!file) return;
+    setBusyVideo(true); setErr('');
+    try {
+      const form = new FormData(); form.append('file', file);
+      const { url } = await api.upload('/admin/assets/video', form);
+      await api.post('/admin/gallery', { type: 'VIDEO', url });
+      await load();
+    } catch (e) { setErr(e.message); }
+    setBusyVideo(false);
+  }
+
+  async function remove(id) { if (!confirm('Delete this item?')) return; await api.del(`/admin/gallery/${id}`); load(); }
+  async function move(id, dir) { setItems(await api.put(`/admin/gallery/${id}/move?dir=${dir}`)); }
+
+  return (
+    <>
+      <div className="box narrow">
+        <h3>Photos</h3>
+        <p className="muted">Shown on the public Gallery page's Photos tab.</p>
+        <div className="hero-thumbs">
+          {photos.map((p, i) => (
+            <div className="hero-thumb" key={p.id}>
+              <img src={p.url} alt="" />
+              <div className="hero-thumb-actions">
+                <button type="button" className="link dark" disabled={i === 0} onClick={() => move(p.id, 'up')}>↑</button>
+                <button type="button" className="link dark" disabled={i === photos.length - 1} onClick={() => move(p.id, 'down')}>↓</button>
+                <button type="button" className="link dark" onClick={() => remove(p.id)}>Remove</button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <label className="block">Add photos (you can select more than one)
+          <input type="file" accept="image/*" multiple disabled={busyPhotos} onChange={(e) => addPhotos(Array.from(e.target.files))} />
+        </label>
+        {photos.length === 0 && <p className="muted">No photos yet.</p>}
+      </div>
+
+      <div className="box narrow">
+        <h3>Videos</h3>
+        <p className="muted">Shown on the public Gallery page's Videos tab. Keep clips short/compressed - they're stored in the database.</p>
+        <div>
+          {videos.map((v, i) => (
+            <div className="listrow" key={v.id}>
+              <span><video src={v.url} className="thumb small" muted /> Video #{v.id}</span>
+              <span className="row">
+                <button className="link dark" disabled={i === 0} onClick={() => move(v.id, 'up')}>↑</button>
+                <button className="link dark" disabled={i === videos.length - 1} onClick={() => move(v.id, 'down')}>↓</button>
+                <button className="link dark" onClick={() => remove(v.id)}>Delete</button>
+              </span>
+            </div>
+          ))}
+        </div>
+        <label className="block">Add a video
+          <input type="file" accept="video/*" disabled={busyVideo} onChange={(e) => addVideo(e.target.files[0])} />
+        </label>
+        {videos.length === 0 && <p className="muted">No videos yet.</p>}
+      </div>
+
+      {err && <p className="err">{err}</p>}
+    </>
   );
 }
 

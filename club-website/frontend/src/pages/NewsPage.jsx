@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, fmtDate } from '../api.js';
 import { renderRichText, plainPreview } from '../richtext.jsx';
+import Lightbox from '../components/Lightbox.jsx';
 import { useLang } from '../i18n/index.jsx';
 
 export default function NewsPage() {
   const { id } = useParams();
   const { t } = useLang();
   const [items, setItems] = useState([]);
+  const [open, setOpen] = useState(null);
   useEffect(() => { api.get(id ? `/news/${id}` : '/news').then((r) => setItems(id ? [r] : r)).catch(() => setItems([])); }, [id]);
 
   return (
@@ -21,9 +23,15 @@ export default function NewsPage() {
             <h3>{id ? n.title : <Link to={`/news/${n.id}`}>{n.title}</Link>}</h3>
             <div className="muted">{fmtDate(n.publishedAt)}</div>
             <p className="prewrap">{id ? renderRichText(n.content) : plainPreview(n.content)}</p>
+            {id && n.photoUrls && n.photoUrls.length > 0 && (
+              <div className="gallery-grid">
+                {n.photoUrls.map((url, i) => <img key={i} src={url} alt="" onClick={() => setOpen({ type: 'PHOTO', url })} />)}
+              </div>
+            )}
           </div>
         </article>
       ))}
+      <Lightbox item={open} onClose={() => setOpen(null)} />
     </>
   );
 }

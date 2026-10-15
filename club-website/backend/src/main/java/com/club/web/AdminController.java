@@ -24,6 +24,7 @@ public class AdminController {
     public record HeroImageReq(String url) {}
     public record FounderReq(String name, String text, String imageUrl) {}
     public record SponsorReq(String name, String imageUrl, String linkUrl) {}
+    public record GalleryItemReq(String type, String url) {}
     public record MemberRow(Long userId, String fullName, String email) {}
     public record MarketingSendReq(String subject, String body, List<Long> recipientIds) {}
     public record MarketingSendResult(int sent, int failed, int skipped) {}
@@ -34,14 +35,14 @@ public class AdminController {
     private final NewsRepo news; private final GameRepo games; private final StandingRepo standings;
     private final SettingRepo settings; private final AssetRepo assets; private final PaymentRepo payments; private final UserRepo users;
     private final HeroImageRepo heroImages; private final MailService mail; private final FounderRepo founders;
-    private final SponsorRepo sponsors;
+    private final SponsorRepo sponsors; private final GalleryItemRepo gallery;
 
     public AdminController(NewsRepo news, GameRepo games, StandingRepo standings, SettingRepo settings,
                            AssetRepo assets, PaymentRepo payments, UserRepo users, HeroImageRepo heroImages, MailService mail,
-                           FounderRepo founders, SponsorRepo sponsors) {
+                           FounderRepo founders, SponsorRepo sponsors, GalleryItemRepo gallery) {
         this.news = news; this.games = games; this.standings = standings; this.settings = settings;
         this.assets = assets; this.payments = payments; this.users = users; this.heroImages = heroImages; this.mail = mail;
-        this.founders = founders; this.sponsors = sponsors;
+        this.founders = founders; this.sponsors = sponsors; this.gallery = gallery;
     }
 
     // ---- news ----
@@ -55,6 +56,7 @@ public class AdminController {
         News old = news.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         old.setTitle(n.getTitle()); old.setContent(n.getContent()); old.setImageUrl(n.getImageUrl());
         old.setPublishedAt(n.getPublishedAt() == null ? old.getPublishedAt() : n.getPublishedAt());
+        old.setPhotoUrls(n.getPhotoUrls());
         return news.save(old);
     }
     @DeleteMapping("/news/{id}") public void deleteNews(@PathVariable Long id) { news.deleteById(id); }
@@ -94,6 +96,16 @@ public class AdminController {
         Asset a = new Asset(); a.setName(file.getOriginalFilename()); a.setContentType(ct); a.setData(file.getBytes());
         Asset saved = assets.save(a);
         return Map.of("url", "/api/assets/" + saved.getId(), "name", file.getOriginalFilename());
+    }
+
+    /** Video clips for the Gallery page. Stored the same way as images (as a blob) - keep clips
+     * short/compressed, since large videos make the database noticeably bigger. */
+    @PostMapping(value = "/assets/video", consumes = "multipart/form-data")
+    public Map<String, String> uploadVideo(@RequestParam MultipartFile file) throws IOException {
+        String ct = file.getContentType() == null ? "" : file.getContentType();
+        if (!ct.startsWith("video/")) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only video files are allowed");
+        Asset a = new Asset(); a.setName(file.getOriginalFilename()); a.setContentType(ct); a.setData(file.getBytes());
+        return Map.of("url", "/api/assets/" + assets.save(a).getId());
     }
 
     // ---- founders (About us -> Founders page) ----
@@ -194,6 +206,37 @@ public class AdminController {
             sponsors.save(a); sponsors.save(b);
         }
         return sponsors.findAllByOrderBySortOrderAsc();
+    }
+
+    // ---- gallery (photo/video page) ----
+    @GetMapping("/gallery") public List<GalleryItem> listGallery() { return gallery.findAllByOrderBySortOrderAsc(); }
+
+    @PostMapping("/gallery")
+    public GalleryItem addGalleryItem(@RequestBody GalleryItemReq r) {
+        if (r.url() == null || r.url().isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Upload a file first");
+        if (!"PHOTO".equals(r.type()) && !"VIDEO".equals(r.type())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Type must be PHOTO or VIDEO");
+        int next = gallery.findAllByOrderBySortOrderAsc().stream().mapToInt(GalleryItem::getSortOrder).max().orElse(-1) + 1;
+        GalleryItem g = new GalleryItem(); g.setType(r.type()); g.setUrl(r.url()); g.setSortOrder(next);
+        return gallery.save(g);
+    }
+
+    @DeleteMapping("/gallery/{id}") public void deleteGalleryItem(@PathVariable Long id) { gallery.deleteById(id); }
+
+    /** Swaps this item's position with the one immediately before ("up") or after ("down") it,
+     * within its own type (photos and videos are reordered independently). */
+    @PutMapping("/gallery/{id}/move")
+    public List<GalleryItem> moveGalleryItem(@PathVariable Long id, @RequestParam String dir) {
+        GalleryItem item = gallery.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        List<GalleryItem> ordered = gallery.findAllByTypeOrderBySortOrderAsc(item.getType());
+        int i = -1; for (int k = 0; k < ordered.size(); k++) if (ordered.get(k).getId().equals(id)) { i = k; break; }
+        if (i < 0) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        int j = "up".equals(dir) ? i - 1 : i + 1;
+        if (j >= 0 && j < ordered.size()) {
+            GalleryItem a = ordered.get(i), b = ordered.get(j);
+            int tmp = a.getSortOrder(); a.setSortOrder(b.getSortOrder()); b.setSortOrder(tmp);
+            gallery.save(a); gallery.save(b);
+        }
+        return gallery.findAllByOrderBySortOrderAsc();
     }
 
     // ---- subscriptions ----

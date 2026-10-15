@@ -51,8 +51,19 @@ public class SeoController {
                 .replace("\"", "&quot;").replace("'", "&#39;");
     }
 
-    // Mirrors the frontend's tiny link syntax (frontend/src/richtext.jsx): [label](https://url).
-    private static final Pattern LINK_RE = Pattern.compile("\\[([^\\]]+)]\\((https?://[^\\s)]+)\\)");
+    // Mirrors the frontend's tiny link syntax (frontend/src/richtext.jsx): [label](url) - the
+    // url can be typed with or without "https://".
+    private static final Pattern LINK_RE = Pattern.compile("\\[([^\\]]+)]\\(([^\\s)]+)\\)");
+    private static final Pattern SAFE_SCHEME = Pattern.compile("(?i)^(https?:|mailto:|tel:).*");
+    private static final Pattern ANY_SCHEME = Pattern.compile("(?i)^[a-z][a-z0-9+.-]*:.*");
+
+    /** Mirrors the frontend's safeHref(): bare domains get "https://" added, an unexpected scheme
+     * (e.g. "javascript:") is rejected (returns null, left as unlinked text). */
+    private static String safeHref(String url) {
+        if (SAFE_SCHEME.matcher(url).matches()) return url;
+        if (ANY_SCHEME.matcher(url).matches()) return null;
+        return "https://" + url;
+    }
 
     /** Escapes everything first, then turns the (now-escaped) [label](url) markers into real
      * &lt;a&gt; tags and keeps line breaks - so admin-entered text is both safe and link-aware. */
@@ -63,8 +74,13 @@ public class SeoController {
         int last = 0;
         while (m.find()) {
             out.append(escaped, last, m.start());
-            out.append("<a href=\"").append(m.group(2)).append("\" target=\"_blank\" rel=\"noopener noreferrer\">")
-                    .append(m.group(1)).append("</a>");
+            String href = safeHref(m.group(2));
+            if (href != null) {
+                out.append("<a href=\"").append(href).append("\" target=\"_blank\" rel=\"noopener noreferrer\">")
+                        .append(m.group(1)).append("</a>");
+            } else {
+                out.append(m.group());
+            }
             last = m.end();
         }
         out.append(escaped, last, escaped.length());
@@ -134,8 +150,10 @@ public class SeoController {
         if (n == null) return page("Not found", "This news item does not exist", "/news", "<h1>Not found</h1>", null);
 
         String desc = trim(n.getContent(), 160);
+        StringBuilder photos = new StringBuilder();
+        for (String url : n.getPhotoUrls()) photos.append("<img src=\"").append(esc(site + url)).append("\" alt=\"\">");
         String body = "<h1>" + esc(n.getTitle()) + "</h1><p>" + n.getPublishedAt() + "</p><div>"
-                + richTextToHtml(n.getContent()) + "</div><p><a href=\"" + site + "/news\">Back to all news</a></p>";
+                + richTextToHtml(n.getContent()) + "</div>" + photos + "<p><a href=\"" + site + "/news\">Back to all news</a></p>";
         String jsonLd = "{\"@context\":\"https://schema.org\",\"@type\":\"Article\",\"headline\":\""
                 + n.getTitle().replace("\"", "'") + "\",\"datePublished\":\"" + n.getPublishedAt() + "\"}";
         return page(n.getTitle(), desc, "/news/" + id, body, jsonLd);

@@ -13,8 +13,10 @@ spring:
     hibernate.ddl-auto: update
     open-in-view: false
   servlet.multipart:
-    max-file-size: 10MB
-    max-request-size: 10MB
+    # Images/documents stay small, but gallery videos need real headroom - keep clips short and
+    # compressed anyway, since everything here is stored as a blob in the database.
+    max-file-size: 200MB
+    max-request-size: 200MB
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}

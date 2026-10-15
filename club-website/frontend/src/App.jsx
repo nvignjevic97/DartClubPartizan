@@ -8,6 +8,7 @@ import Sidebar from './components/Sidebar.jsx';
 import Home from './pages/Home.jsx';
 import NewsPage from './pages/NewsPage.jsx';
 import About from './pages/About.jsx';
+import Gallery from './pages/Gallery.jsx';
 import Login from './pages/Login.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
 import Account from './pages/Account.jsx';
@@ -75,6 +76,7 @@ export default function App() {
               <NavLink to="/" end>{t('nav.home')}</NavLink>
               <NavLink to="/news">{t('nav.news')}</NavLink>
               <NavLink to="/about">{t('nav.about')}</NavLink>
+              <NavLink to="/gallery">{t('nav.gallery')}</NavLink>
               {user && <NavLink to="/account">{t('nav.account')}</NavLink>}
               {isAdmin && <NavLink to="/admin">{t('nav.admin')}</NavLink>}
               {user ? <button className="link" onClick={logout}>{t('nav.logout')}</button> : <NavLink to="/login">{t('nav.login')}</NavLink>}
@@ -91,6 +93,7 @@ export default function App() {
             <Route path="/news" element={<NewsPage />} />
             <Route path="/news/:id" element={<NewsPage />} />
             <Route path="/about" element={<About />} />
+            <Route path="/gallery" element={<Gallery />} />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />

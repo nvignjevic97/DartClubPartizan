@@ -3,7 +3,7 @@ import { api, fmtDate } from '../api.js';
 import { useConfig } from '../config.js';
 import Crud from '../components/Crud.jsx';
 
-const TABS = ['Accounts', 'Subscriptions', 'News', 'Matches', 'League table', 'Founders', 'Club Statute', 'Email templates', 'Marketing emails', 'Site settings'];
+const TABS = ['Accounts', 'Subscriptions', 'News', 'Matches', 'League table', 'Founders', 'Club Statute', 'Sponsors', 'Email templates', 'Marketing emails', 'Site settings'];
 
 // datetime-local inputs need "YYYY-MM-DDTHH:mm" in LOCAL time - toISOString() would give UTC and shift the displayed time.
 function nowLocal() {
@@ -26,7 +26,9 @@ export default function Admin() {
       {tab === 'Accounts' && <Accounts onCount={setPendingCount} />}
       {tab === 'Subscriptions' && <Subscriptions />}
       {tab === 'News' && <Crud title="news" listPath="/news" adminPath="/admin/news"
-        fields={[{ name: 'title', label: 'Title', type: 'text' }, { name: 'content', label: 'Text', type: 'textarea' }, { name: 'imageUrl', label: 'Picture', type: 'image' },
+        fields={[{ name: 'title', label: 'Title', type: 'text' },
+          { name: 'content', label: 'Text', type: 'textarea', hint: 'Tip: add a link by writing [link text](https://example.com) — e.g. [visit claude.ai](https://claude.ai)' },
+          { name: 'imageUrl', label: 'Picture', type: 'image' },
           { name: 'publishedAt', label: 'Published date (backdate if needed)', type: 'datetime', default: nowLocal }]}
         summary={(n) => `${n.title} (${fmtDate(n.publishedAt)})`} />}
       {tab === 'Matches' && <Crud title="match" listPath="/matches" adminPath="/admin/matches"
@@ -41,6 +43,7 @@ export default function Admin() {
         summary={(s) => `${s.team} — ${s.points} pts (${s.won}W-${s.lost}L)`} />}
       {tab === 'Founders' && <FoundersAdmin />}
       {tab === 'Club Statute' && <StatuteAdmin />}
+      {tab === 'Sponsors' && <SponsorsAdmin />}
       {tab === 'Email templates' && <EmailTemplates />}
       {tab === 'Marketing emails' && <MarketingEmails />}
       {tab === 'Site settings' && <><HeroImages /><Settings /></>}
@@ -655,6 +658,67 @@ function StatuteAdmin() {
       {msg && <p className="ok">{msg}</p>}
       <button className="btn">Save</button>
     </form>
+  );
+}
+
+function SponsorsAdmin() {
+  const empty = { name: '', imageUrl: '', linkUrl: '' };
+  const [items, setItems] = useState([]);
+  const [item, setItem] = useState(empty);
+  const [err, setErr] = useState('');
+  const load = () => api.get('/admin/sponsors').then(setItems).catch((e) => setErr(e.message));
+  useEffect(() => { load(); }, []);
+
+  async function uploadImage(file) {
+    if (!file) return;
+    const form = new FormData(); form.append('file', file);
+    try { const r = await api.upload('/admin/assets', form); setItem((o) => ({ ...o, imageUrl: r.url })); } catch (e) { setErr(e.message); }
+  }
+
+  async function save(e) {
+    e.preventDefault(); setErr('');
+    try {
+      if (item.id) await api.put(`/admin/sponsors/${item.id}`, item); else await api.post('/admin/sponsors', item);
+      setItem(empty); load();
+    } catch (ex) { setErr(ex.message); }
+  }
+
+  async function remove(id) { if (!confirm('Delete this sponsor?')) return; await api.del(`/admin/sponsors/${id}`); load(); }
+  async function move(id, dir) { setItems(await api.put(`/admin/sponsors/${id}/move?dir=${dir}`)); }
+
+  return (
+    <div className="split">
+      <form className="box" onSubmit={save}>
+        <h3>{item.id ? 'Edit' : 'Add'} sponsor</h3>
+        <label>Name<input value={item.name} onChange={(e) => setItem({ ...item, name: e.target.value })} required /></label>
+        <label>Logo
+          {item.imageUrl && <img className="thumb" src={item.imageUrl} alt="" />}
+          <input type="file" accept="image/*" onChange={(e) => uploadImage(e.target.files[0])} />
+        </label>
+        <label>Link (optional) <span className="muted block">Where clicking the logo goes, e.g. the sponsor's own website.</span>
+          <input value={item.linkUrl} onChange={(e) => setItem({ ...item, linkUrl: e.target.value })} placeholder="https://…" />
+        </label>
+        {err && <p className="err">{err}</p>}
+        <div className="row">
+          <button className="btn">Save</button>
+          {item.id && <button type="button" className="btn ghost" onClick={() => setItem(empty)}>Cancel</button>}
+        </div>
+      </form>
+      <div>
+        {items.length === 0 && <p className="muted">No sponsors added yet.</p>}
+        {items.map((sp, i) => (
+          <div className="listrow" key={sp.id}>
+            <span>{sp.imageUrl && <img className="thumb small" src={sp.imageUrl} alt="" />} {sp.name}</span>
+            <span className="row">
+              <button className="link dark" disabled={i === 0} onClick={() => move(sp.id, 'up')}>↑</button>
+              <button className="link dark" disabled={i === items.length - 1} onClick={() => move(sp.id, 'down')}>↓</button>
+              <button className="link dark" onClick={() => setItem(sp)}>Edit</button>
+              <button className="link dark" onClick={() => remove(sp.id)}>Delete</button>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

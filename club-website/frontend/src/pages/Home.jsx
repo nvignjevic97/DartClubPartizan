@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, fmtDate } from '../api.js';
+import { plainPreview } from '../richtext.jsx';
 import { useConfig } from '../config.js';
 import { useLang } from '../i18n/index.jsx';
 
@@ -44,7 +45,7 @@ export default function Home() {
           <div>
             <h3><Link to={`/news/${n.id}`}>{n.title}</Link></h3>
             <div className="muted">{fmtDate(n.publishedAt)}</div>
-            <p>{n.content.length > 200 ? n.content.slice(0, 200) + '…' : n.content}</p>
+            <p>{plainPreview(n.content)}</p>
           </div>
         </article>
       ))}

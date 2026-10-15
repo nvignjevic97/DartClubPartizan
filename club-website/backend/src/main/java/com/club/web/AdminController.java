@@ -23,6 +23,7 @@ public class AdminController {
 
     public record HeroImageReq(String url) {}
     public record FounderReq(String name, String text, String imageUrl) {}
+    public record SponsorReq(String name, String imageUrl, String linkUrl) {}
     public record MemberRow(Long userId, String fullName, String email) {}
     public record MarketingSendReq(String subject, String body, List<Long> recipientIds) {}
     public record MarketingSendResult(int sent, int failed, int skipped) {}
@@ -33,13 +34,14 @@ public class AdminController {
     private final NewsRepo news; private final GameRepo games; private final StandingRepo standings;
     private final SettingRepo settings; private final AssetRepo assets; private final PaymentRepo payments; private final UserRepo users;
     private final HeroImageRepo heroImages; private final MailService mail; private final FounderRepo founders;
+    private final SponsorRepo sponsors;
 
     public AdminController(NewsRepo news, GameRepo games, StandingRepo standings, SettingRepo settings,
                            AssetRepo assets, PaymentRepo payments, UserRepo users, HeroImageRepo heroImages, MailService mail,
-                           FounderRepo founders) {
+                           FounderRepo founders, SponsorRepo sponsors) {
         this.news = news; this.games = games; this.standings = standings; this.settings = settings;
         this.assets = assets; this.payments = payments; this.users = users; this.heroImages = heroImages; this.mail = mail;
-        this.founders = founders;
+        this.founders = founders; this.sponsors = sponsors;
     }
 
     // ---- news ----
@@ -156,6 +158,42 @@ public class AdminController {
             heroImages.save(a); heroImages.save(b);
         }
         return heroImages.findAllByOrderBySortOrderAsc();
+    }
+
+    // ---- sponsors (footer logos) ----
+    @GetMapping("/sponsors") public List<Sponsor> listSponsors() { return sponsors.findAllByOrderBySortOrderAsc(); }
+
+    @PostMapping("/sponsors")
+    public Sponsor addSponsor(@RequestBody SponsorReq r) {
+        if (r.name() == null || r.name().isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Enter a name");
+        if (r.imageUrl() == null || r.imageUrl().isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Upload a logo first");
+        int next = sponsors.findAllByOrderBySortOrderAsc().stream().mapToInt(Sponsor::getSortOrder).max().orElse(-1) + 1;
+        Sponsor sp = new Sponsor(); sp.setName(r.name()); sp.setImageUrl(r.imageUrl()); sp.setLinkUrl(r.linkUrl()); sp.setSortOrder(next);
+        return sponsors.save(sp);
+    }
+
+    @PutMapping("/sponsors/{id}")
+    public Sponsor updateSponsor(@PathVariable Long id, @RequestBody SponsorReq r) {
+        Sponsor sp = sponsors.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        sp.setName(r.name()); sp.setImageUrl(r.imageUrl()); sp.setLinkUrl(r.linkUrl());
+        return sponsors.save(sp);
+    }
+
+    @DeleteMapping("/sponsors/{id}") public void deleteSponsor(@PathVariable Long id) { sponsors.deleteById(id); }
+
+    /** Swaps this sponsor's position with the one immediately before ("up") or after ("down") it. */
+    @PutMapping("/sponsors/{id}/move")
+    public List<Sponsor> moveSponsor(@PathVariable Long id, @RequestParam String dir) {
+        List<Sponsor> ordered = sponsors.findAllByOrderBySortOrderAsc();
+        int i = -1; for (int k = 0; k < ordered.size(); k++) if (ordered.get(k).getId().equals(id)) { i = k; break; }
+        if (i < 0) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        int j = "up".equals(dir) ? i - 1 : i + 1;
+        if (j >= 0 && j < ordered.size()) {
+            Sponsor a = ordered.get(i), b = ordered.get(j);
+            int tmp = a.getSortOrder(); a.setSortOrder(b.getSortOrder()); b.setSortOrder(tmp);
+            sponsors.save(a); sponsors.save(b);
+        }
+        return sponsors.findAllByOrderBySortOrderAsc();
     }
 
     // ---- subscriptions ----

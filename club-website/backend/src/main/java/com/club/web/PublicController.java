@@ -14,12 +14,12 @@ import java.util.*;
 public class PublicController {
     private final NewsRepo news; private final GameRepo games; private final StandingRepo standings;
     private final SettingRepo settings; private final AssetRepo assets; private final HeroImageRepo heroImages;
-    private final FounderRepo founders;
+    private final FounderRepo founders; private final SponsorRepo sponsors;
 
     public PublicController(NewsRepo news, GameRepo games, StandingRepo standings, SettingRepo settings,
-                             AssetRepo assets, HeroImageRepo heroImages, FounderRepo founders) {
+                             AssetRepo assets, HeroImageRepo heroImages, FounderRepo founders, SponsorRepo sponsors) {
         this.news = news; this.games = games; this.standings = standings; this.settings = settings;
-        this.assets = assets; this.heroImages = heroImages; this.founders = founders;
+        this.assets = assets; this.heroImages = heroImages; this.founders = founders; this.sponsors = sponsors;
     }
 
     /** Front-page banner photos, in display order. */
@@ -27,6 +27,9 @@ public class PublicController {
 
     /** Founders/board members shown on the About us -> Founders page, in display order. */
     @GetMapping("/founders") public List<Founder> founders() { return founders.findAllByOrderBySortOrderAsc(); }
+
+    /** Sponsor logos shown in the site footer, in display order. */
+    @GetMapping("/sponsors") public List<Sponsor> sponsors() { return sponsors.findAllByOrderBySortOrderAsc(); }
 
     @GetMapping("/news") public List<News> news() { return news.findAllByOrderByPublishedAtDesc(); }
     @GetMapping("/news/{id}") public News newsOne(@PathVariable Long id) {

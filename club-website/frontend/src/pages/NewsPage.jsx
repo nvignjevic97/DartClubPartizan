@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, fmtDate } from '../api.js';
+import { renderRichText, plainPreview } from '../richtext.jsx';
 import { useLang } from '../i18n/index.jsx';
 
 export default function NewsPage() {
@@ -19,7 +20,7 @@ export default function NewsPage() {
           <div>
             <h3>{id ? n.title : <Link to={`/news/${n.id}`}>{n.title}</Link>}</h3>
             <div className="muted">{fmtDate(n.publishedAt)}</div>
-            <p className="prewrap">{id || n.content.length < 200 ? n.content : n.content.slice(0, 200) + '…'}</p>
+            <p className="prewrap">{id ? renderRichText(n.content) : plainPreview(n.content)}</p>
           </div>
         </article>
       ))}

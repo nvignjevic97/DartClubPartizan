@@ -17,6 +17,23 @@ export default function Sidebar() {
   return (
     <aside>
       <section className="box">
+        <h3>{t('sidebar.leagueTable')}</h3>
+        {table.length === 0 ? <p className="muted">{t('sidebar.tableEmpty')}</p> : (
+          <table className="tbl">
+            <thead><tr><th>{t('sidebar.rank')}</th><th>{t('sidebar.team')}</th><th>{t('sidebar.won')}</th><th>{t('sidebar.lost')}</th><th>{t('sidebar.points')}</th></tr></thead>
+            <tbody>
+              {table.map((s, i) => (
+                <tr key={s.id}>
+                  <td><span className={'rank' + (i < 3 ? ' top' : '')}>{i + 1}</span></td><td>{s.team}</td><td>{s.won}</td><td>{s.lost}</td>
+                  <td><b>{s.points}</b></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section className="box">
         <h3>{t('sidebar.nextMatches')}</h3>
         {next.length === 0 && <p className="muted">{t('sidebar.noMatches')}</p>}
         {next.map((m) => (
@@ -36,23 +53,6 @@ export default function Sidebar() {
             <div className="muted">{fmtDate(m.kickoff)}</div>
           </div>
         ))}
-      </section>
-
-      <section className="box">
-        <h3>{t('sidebar.leagueTable')}</h3>
-        {table.length === 0 ? <p className="muted">{t('sidebar.tableEmpty')}</p> : (
-          <table className="tbl">
-            <thead><tr><th>{t('sidebar.rank')}</th><th>{t('sidebar.team')}</th><th>{t('sidebar.won')}</th><th>{t('sidebar.lost')}</th><th>{t('sidebar.points')}</th></tr></thead>
-            <tbody>
-              {table.map((s, i) => (
-                <tr key={s.id}>
-                  <td><span className={'rank' + (i < 3 ? ' top' : '')}>{i + 1}</span></td><td>{s.team}</td><td>{s.won}</td><td>{s.lost}</td>
-                  <td><b>{s.points}</b></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
       </section>
     </aside>
   );

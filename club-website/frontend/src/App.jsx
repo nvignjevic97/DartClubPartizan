@@ -33,11 +33,13 @@ function Guard({ admin, children }) {
 export default function App() {
   const [config, setConfig] = useState({});
   const [navOpen, setNavOpen] = useState(false);
+  const [sponsors, setSponsors] = useState([]);
   const { user, logout, isAdmin } = useAuth();
   const { t } = useLang();
   const location = useLocation();
 
   useEffect(() => { api.get('/config').then(setConfig).catch(() => {}); }, []);
+  useEffect(() => { api.get('/sponsors').then(setSponsors).catch(() => {}); }, []);
   // Closes the mobile nav dropdown whenever the person navigates somewhere, so it never stays
   // open over the next page.
   useEffect(() => { setNavOpen(false); }, [location.pathname]);
@@ -98,7 +100,19 @@ export default function App() {
       </div>
 
       <footer className="foot">
-        <div className="wrap">{config.footerText} {config.contactEmail && <> · <a href={'mailto:' + config.contactEmail}>{config.contactEmail}</a></>}</div>
+        <div className="wrap">
+          {sponsors.length > 0 && (
+            <div className="footer-sponsors">
+              {sponsors.map((sp) => {
+                const img = <img src={sp.imageUrl} alt={sp.name} title={sp.name} />;
+                return sp.linkUrl
+                  ? <a key={sp.id} href={sp.linkUrl} target="_blank" rel="noopener noreferrer">{img}</a>
+                  : <span key={sp.id}>{img}</span>;
+              })}
+            </div>
+          )}
+          <div>{config.footerText} {config.contactEmail && <> · <a href={'mailto:' + config.contactEmail}>{config.contactEmail}</a></>}</div>
+        </div>
       </footer>
     </ConfigCtx.Provider>
   );

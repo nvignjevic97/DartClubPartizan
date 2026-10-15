@@ -3,7 +3,7 @@ import { api } from '../api.js';
 
 /**
  * Generic admin editor: list + create/edit form.
- * fields: [{ name, label, type: text|textarea|number|datetime|image }]
+ * fields: [{ name, label, type: text|textarea|number|datetime|image, hint? }]
  * listPath: public GET path; adminPath: base path for POST/PUT/DELETE.
  */
 export default function Crud({ title, listPath, adminPath, fields, summary }) {
@@ -49,6 +49,7 @@ export default function Crud({ title, listPath, adminPath, fields, summary }) {
         <h3>{item.id ? 'Edit' : 'Add'} {title}</h3>
         {fields.map((f) => (
           <label key={f.name}>{f.label}
+            {f.hint && <span className="muted block">{f.hint}</span>}
             {f.type === 'textarea' ? <textarea rows={6} value={item[f.name] ?? ''} onChange={(e) => set(f.name, e.target.value)} required={!f.optionalNumber} />
               : f.type === 'image' ? (
                 <>

@@ -6,11 +6,14 @@ import com.club.repo.service.FounderRepo;
 import com.club.repo.service.NewsRepo;
 import com.club.repo.service.SettingRepo;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,6 +94,7 @@ public class SeoController {
         String canonical = site + canonicalPath;
         return "<!doctype html><html lang=\"sr\"><head><meta charset=\"UTF-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+                + "<link rel=\"icon\" href=\"/favicon.ico\">"
                 + "<title>" + esc(title) + "</title>"
                 + "<meta name=\"description\" content=\"" + esc(description) + "\">"
                 + "<link rel=\"canonical\" href=\"" + esc(canonical) + "\">"
@@ -206,6 +210,16 @@ public class SeoController {
             xml.append(url(site + "/news/" + n.getId(), n.getPublishedAt() == null ? null : n.getPublishedAt().toLocalDate().toString()));
         xml.append("</urlset>");
         return xml.toString();
+    }
+
+    // Browser tabs and Google's search-result icon both read this from the site's root - and
+    // unlike index.html (a static file baked at build time) this always reflects whatever logo
+    // is currently set in Admin -> Site settings, with no JS or rebuild needed.
+    @GetMapping("/favicon.ico")
+    public ResponseEntity<Void> favicon() {
+        String logo = cfg().get("logoUrl");
+        if (logo == null || logo.isBlank()) return ResponseEntity.notFound().build();
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(site + logo)).build();
     }
 
     private static String url(String loc, String lastmod) {

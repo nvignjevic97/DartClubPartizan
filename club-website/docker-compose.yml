@@ -12,9 +12,11 @@ services:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 3s
       retries: 20
+    restart: unless-stopped
 
   backend:
     build: ./backend
+    restart: unless-stopped
     depends_on:
       db: { condition: service_healthy }
     environment:
@@ -36,6 +38,7 @@ services:
 
   frontend:
     build: ./frontend
+    restart: unless-stopped
     depends_on: [backend]
     expose: ["80"]
 
